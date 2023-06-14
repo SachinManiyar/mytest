@@ -1,0 +1,23 @@
+import boto3
+
+def lambda_handler(event, context):
+    try:
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table('YourTableName')
+        
+        response = table.scan()
+        items = response['Items']
+        
+        # Process the retrieved items
+        print(items)
+        
+        return {
+            'statusCode': 200,
+            'body': items
+        }
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': 'Error retrieving DynamoDB table values.'
+        }
