@@ -1,1 +1,43 @@
 
+import boto3
+import pymysql
+
+def lambda_handler(event, context):
+    try:
+        # Connect to DynamoDB
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table('YourTableName')
+
+        # Scan DynamoDB table
+        response = table.scan()
+        items = response['Items']
+
+        # Connect to RDS
+        connection = pymysql.connect(
+            host='your-rds-host',
+            user='your-username',
+            password='your-password',
+            database='your-database'
+        )
+        cursor = connection.cursor()
+
+        # Insert items into RDS
+        for item in items:
+            # Assuming you have a table 'YourRdsTableName' in your RDS
+            query = "INSERT INTO YourRdsTableName (column1, column2) VALUES (%s, %s)"
+            cursor.execute(query, (item['column1'], item['column2']))
+        
+        # Commit changes and close connection
+        connection.commit()
+        connection.close()
+
+        return {
+            'statusCode': 200,
+            'body': 'Data uploaded to RDS successfully'
+        }
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': 'Error uploading data to RDS'
+        }
