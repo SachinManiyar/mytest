@@ -1,0 +1,49 @@
+---
+- name: Update and Install Neo4j
+  hosts: ec2
+  become: yes
+  become_user: root
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: Remove existing Neo4j installation
+      apt:
+        name: neo4j
+        state: absent
+      become: yes
+      ignore_errors: yes
+
+    - name: Install Java OpenJDK
+      apt:
+        name: openjdk-8-jdk
+        state: present
+      become: yes
+
+    - name: Add Neo4j repository key
+      apt_key:
+        url: https://debian.neo4j.com/neotechnology.gpg.key
+        state: present
+      become: yes
+
+    - name: Add Neo4j repository
+      apt_repository:
+        repo: "deb https://debian.neo4j.com stable latest"
+        state: present
+        filename: neo4j.list
+      become: yes
+
+    - name: Install Neo4j
+      apt:
+        name: neo4j
+        state: present
+      become: yes
+
+    - name: Start Neo4j service
+      service:
+        name: neo4j
+        state: started
+        enabled: yes
+      become: yes
