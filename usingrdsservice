@@ -1,0 +1,53 @@
+import json
+import boto3
+
+# Configuration for DynamoDB and RDS
+dynamodb_table_name = 'your-dynamodb-table'
+rds_cluster_arn = 'your-rds-cluster-arn'
+database_name = 'your-rds-database'
+rds_table_name = 'your-rds-table'
+
+def lambda_handler(event, context):
+    try:
+        # Initialize AWS RDS Data Service client
+        rds_data = boto3.client('rds-data')
+
+        # Retrieve data from DynamoDB
+        dynamodb = boto3.client('dynamodb')
+        response = dynamodb.scan(TableName=dynamodb_table_name)
+        items = response['Items']
+
+        # Prepare data for insertion into RDS
+        rds_data_params = []
+        for item in items:
+            data = {
+                'column1': {'stringValue': item['column1']['S']},
+                'column2': {'stringValue': item['column2']['S']},
+                'column3': {'stringValue': item['column3']['S']},
+                'column4': {'stringValue': item['column4']['N']},
+                'column5': {'booleanValue': item['column5']['BOOL']}
+            }
+            rds_data_params.append(data)
+
+        # Insert data into RDS
+        sql_statement = f"INSERT INTO {rds_table_name} (column1, column2, column3, column4, column5) " \
+                        "VALUES (:column1, :column2, :column3, :column4, :column5)"
+        parameters = {
+            'database': database_name,
+            'resourceArn': rds_cluster_arn,
+            'secretArn': 'your-secret-arn',
+            'sql': sql_statement,
+            'parameters': rds_data_params
+        }
+        rds_data.execute_statement(**parameters)
+
+        return {
+            'statusCode': 200,
+            'body': 'Data uploaded to RDS successfully.'
+        }
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': 'An error occurred while processing the data.'
+        }
