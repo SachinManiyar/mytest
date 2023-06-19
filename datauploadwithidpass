@@ -1,0 +1,39 @@
+import json
+import boto3
+
+# Configuration for DynamoDB and RDS
+dynamodb_table_name = 'your-dynamodb-table'
+rds_host = 'your-rds-host'
+rds_user = 'your-rds-username'
+rds_password = 'your-rds-password'
+rds_db_name = 'your-rds-database'
+rds_table_name = 'your-rds-table'
+
+def lambda_handler(event, context):
+    try:
+        # Retrieve data from DynamoDB
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table(dynamodb_table_name)
+        response = table.scan()
+        items = response['Items']
+
+        # Prepare data for insertion into RDS
+        rds_data = []
+        for item in items:
+            data = (
+                item['column1'],
+                item['column2'],
+                item['column3'],
+                item['column4'],
+                item['column5']
+            )
+            rds_data.append(data)
+
+        # Insert data into RDS
+        rds_client = boto3.client('rds-data')
+        sql = f"INSERT INTO {rds_table_name} (column1, column2, column3, column4, column5) " \
+              "VALUES (:1, :2, :3, :4, :5)"
+        response = rds_client.batch_execute_statement(
+            secretArn=f"arn:aws:secretsmanager:{region}:{account_id}:secret:your-secret",
+            resourceArn=f"arn:aws:rds:{region}:{account_id}:cluster:your-cluster",
+            database=rds_db_name
