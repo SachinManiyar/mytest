@@ -1,0 +1,47 @@
+import boto3
+import pymysql
+
+def lambda_handler(event, context):
+    # DynamoDB connection parameters
+    dynamodb = boto3.resource('dynamodb')
+    table_name = 'your-dynamodb-table-name'
+    table = dynamodb.Table(table_name)
+
+    # RDS connection parameters
+    rds_host = 'your-rds-hostname'
+    rds_port = 3306
+    db_name = 'your-rds-database-name'
+    username = 'your-rds-username'
+    password = 'your-rds-password'
+
+    # Connect to RDS
+    conn = pymysql.connect(host=rds_host, port=rds_port, user=username, passwd=password, db=db_name)
+    cursor = conn.cursor()
+
+    # Read data from DynamoDB
+    response = table.scan()
+    items = response['Items']
+
+    # Insert data into RDS
+    for item in items:
+        column1 = item.get('column1', '')
+        column2 = item.get('column2', '')
+        column3 = item.get('column3', '')
+        column4 = item.get('column4', '')
+        column5 = item.get('column5', '')
+
+        # Insert into RDS
+        query = f"INSERT INTO your_rds_table (column1, column2, column3, column4, column5) VALUES ('{column1}', '{column2}', '{column3}', '{column4}', '{column5}')"
+        cursor.execute(query)
+
+    # Commit the changes to RDS
+    conn.commit()
+
+    # Close the connections
+    cursor.close()
+    conn.close()
+
+    return {
+        'statusCode': 200,
+        'body': 'Data retrieved from DynamoDB and inserted into RDS successfully'
+    }
