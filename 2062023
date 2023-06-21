@@ -1,49 +1,37 @@
-import boto3
 import pymysql
 
 def lambda_handler(event, context):
-    # DynamoDB connection parameters
-    dynamodb = boto3.resource('dynamodb')
-    table_name = 'your-dynamodb-table-name'
-    table = dynamodb.Table(table_name)
-
     # RDS connection parameters
     rds_host = 'your-rds-hostname'
     rds_port = 3306
-    db_name = 'your-rds-database-name'
-    username = 'your-rds-username'
-    password = 'your-rds-password'
+    db_name = 'your-database-name'
+    username = 'your-username'
+    password = 'your-password'
 
-    # Connect to RDS
+    # Connect to the RDS instance
     conn = pymysql.connect(host=rds_host, port=rds_port, user=username, passwd=password, db=db_name)
     cursor = conn.cursor()
 
-    # Read data from DynamoDB
-    response = table.scan()
-    items = response['Items']
+    # Execute the SELECT query
+    query = 'SELECT * FROM your_table'
+    cursor.execute(query)
 
-    # Print the columns
-    for item in items:
-        column1 = item['column1']
-        column2 = item['column2']
-        column3 = item['column3']
-        column4 = item['column4']
-        column5 = item['column5']
+    # Fetch all rows from the result
+    rows = cursor.fetchall()
 
-        print(f"Column 1: {column1}, Column 2: {column2}, Column 3: {column3}, Column 4: {column4}, Column 5: {column5}")
+    # Process the retrieved data and print
+    for row in rows:
+        # Access the data elements of each row
+        column1 = row[0]
+        column2 = row[1]
+        # Process the data as needed
+        print(f"Column 1: {column1}, Column 2: {column2}")
 
-        # Insert into RDS
-        query = f"INSERT INTO your_rds_table (column1, column2, column3, column4, column5) VALUES ('{column1}', '{column2}', '{column3}', '{column4}', '{column5}')"
-        cursor.execute(query)
-
-    # Commit the changes to RDS
-    conn.commit()
-
-    # Close the connections
+    # Close the database connection
     cursor.close()
     conn.close()
 
     return {
         'statusCode': 200,
-        'body': 'Data retrieved from DynamoDB and inserted into RDS successfully'
+        'body': 'Query executed successfully'
     }
