@@ -1,1 +1,50 @@
 
+import json
+import pymysql
+
+def lambda_handler(event, context):
+    # Retrieve the JSON response from the API endpoint
+    response = requests.get('YOUR_API_ENDPOINT')
+    json_data = response.json()
+
+    # Connect to the RDS instance
+    conn = pymysql.connect(
+        host='YOUR_RDS_ENDPOINT',
+        user='YOUR_RDS_USERNAME',
+        password='YOUR_RDS_PASSWORD',
+        database='YOUR_DATABASE_NAME'
+    )
+
+    # Create a cursor object
+    cursor = conn.cursor()
+
+    # Iterate over the JSON data and insert/update the selected keys' values in the RDS instance
+    for item in json_data:
+        column1 = item.get('a')
+        column2 = item.get('b')
+        column3 = item.get('c')
+        column4 = item.get('d')
+        column5 = item.get('e')
+
+        # Check if an entry with the value of column1 already exists
+        sql_query = "SELECT * FROM your_table WHERE column1 = %s"
+        cursor.execute(sql_query, (column1,))
+        existing_entry = cursor.fetchone()
+
+        if existing_entry:
+            # Entry already exists, update all columns
+            sql_query = "UPDATE your_table SET column2 = %s, column3 = %s, column4 = %s, column5 = %s WHERE column1 = %s"
+            cursor.execute(sql_query, (column2, column3, column4, column5, column1))
+        else:
+            # Entry doesn't exist, insert a new row
+            sql_query = "INSERT INTO your_table (column1, column2, column3, column4, column5) VALUES (%s, %s, %s, %s, %s)"
+            cursor.execute(sql_query, (column1, column2, column3, column4, column5))
+
+    # Commit the changes and close the connection
+    conn.commit()
+    conn.close()
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Data inserted/updated successfully')
+    }
